@@ -1,0 +1,16 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -fsanitize=address -g
+objects = vector.o bigint.o
+
+all: $(objects)
+	$(CC) $^ -o objects
+	
+
+$(objects): %.o: %.c
+	$(CC) -c $(CFLAGS) $^ -o $@
+
+%.c:
+	touch $@
+
+clean:
+	rm -f *.c *.o all

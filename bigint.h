@@ -20,4 +20,4 @@ void divBig(big_int* b1, big_int* b2);
 
 big_int* newBigInt(int i);
 
-#endif BIGINT_H
+#endif

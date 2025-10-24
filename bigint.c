@@ -63,7 +63,7 @@ big_int* newBigInt(int i) {
         i = -i;
     } else b-> sign = 0;
 
-    b->arr[0] = i;
+    set(b->arr, 0, i);
 
     return b;
 }

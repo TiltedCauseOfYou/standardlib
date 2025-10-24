@@ -6,6 +6,9 @@
         "format": "c",
         "initializer_list": "c",
         "span": "c",
-        "cstdlib": "c"
+        "cstdlib": "c",
+        "errno.h": "c",
+        "stdlib.h": "c",
+        "string.h": "c"
     }
 }

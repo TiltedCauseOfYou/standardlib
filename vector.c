@@ -21,7 +21,7 @@ void appendA(vec32* vec, uint32_t el, float a) {
 
             return;
         }
-        memset(vec->arr + vec->i, 0, a * 3.0 * vec->size);
+        memset(vec->arr + vec->i, 0, a * 2.0 * vec->size);
         vec->size *= a;
     }
 
@@ -31,17 +31,17 @@ void append(vec32* vec, uint32_t el) {
     appendA(vec, el, 2.0);
 }
 
-void popA(vec32* vec, float a) {
+uint32_t popA(vec32* vec, float a) {
     if(!vec->i) {
         fprintf(stderr, "IndexOutOfBoundsError: You can not pop an empty vector.\n");
-        return;
+        return 0;
     }
-    vec->arr[vec->i--]; 
+    uint32_t data = vec->arr[vec->i--]; 
 
     if(vec->i <= vec->size * a && vec->size > 16) {
         int size = 16;
         if(vec->size * a > 16) size = vec->size * a;
-        else return;
+        else return data;
         vec->arr = realloc(vec->arr, size * 4 * a);
         if(!vec->arr) {
             fprintf(stderr, "An error occured reallocating space for a vector size %d / %d.\n", vec->size, size);
@@ -49,13 +49,15 @@ void popA(vec32* vec, float a) {
             vec->arr = 0;
             vec->i = 0;
 
-            return;
+            return 0;
         }
         vec->size = size;
     }
+
+    return data;
 }
-void pop(vec32* vec) {
-    popA(vec, 0.25);
+uint32_t pop(vec32* vec) {
+    return popA(vec, 0.25);
 }
 
 vec32* newVecA(uint32_t a) {
@@ -97,11 +99,19 @@ void set(vec32* vec, uint32_t i, uint32_t el) {
     vec->arr[i] = el;
 }
 
+void printVecFull(vec32* vec) {
+    uint32_t i = vec->i;
+    vec->i = vec->size;
+    printVec(vec);
+    vec->i = i;
+}
 void printVec(vec32* vec) {
-    uint32_t size = vec->size;
+    uint32_t size = vec->i;
     printf("<[");
-    for(int i = 0; i < size - 1; i++) printf("%d, ", vec->arr[i]);
-    printf("%d]>\n", vec->arr[size-1]);
+    if(size > 0) {
+        for(int i = 0; i < size - 1; i++) printf("%d, ", vec->arr[i]);
+        printf("%d]>\n", vec->arr[size-1]);
+    } else printf("]>\n");
 }
 
 void freeVec(vec32* vec) {

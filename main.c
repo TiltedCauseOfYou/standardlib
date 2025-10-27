@@ -1,8 +1,9 @@
-#include "vector.h"
+// #include "vector.h"
+#include "hash.h"
 
-int main(int argc, char const *argv[])
+int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const *argv[])
 {
-    vec32* vec = newVec();
+    /* vec32* vec = newVec();
 
     for(int i = 1; i < 51; i++) {
         append(vec, i);
@@ -14,7 +15,17 @@ int main(int argc, char const *argv[])
         printVec(vec);
     }
 
-    freeVec(vec);
+    freeVec(vec); */
+
+    HashTable* table = createHashTable(10);
+    for(int i = 0; i < 10; i++) {
+        int* num = malloc(sizeof(int));
+        *num = i;
+        insert(table, (char*) &num, sizeof(int), num, INT);
+    }
+
+    printTable(table);
+    freeTable(table);
 
     return 0;
 }

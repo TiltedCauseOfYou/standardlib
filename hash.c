@@ -1,38 +1,4 @@
-#include <stdio.h>
-#include <math.h>
-
 #include "hash.h"
-
-enum DataType {
-    INT,
-    INT32,
-    UINT32,
-    INT64,
-    UINT64,
-    FLOAT,
-    DOUBLE,
-    POINTER
-};
-
-typedef struct Data {
-    DataType keyType;
-    DataType type;
-    void* key;
-    void* data;
-} Data;
-
-typedef struct HashTable {
-    DataType type;
-    size_t size;
-    dynamArr** table;
-} HashTable;
-
-typedef struct dynamArr {
-    size_t size;
-    size_t i;
-    DataType type;
-    void* data;
-} dynamArr;
 
 uint8_t sizeOfType(DataType type) {
     switch(type) {
@@ -51,125 +17,60 @@ uint8_t sizeOfType(DataType type) {
         case(POINTER):
             return sizeof(char*);
         default:
-            fprintf(stderr, "%s is an unknown datatype.\n", type);
+            fprintf(stderr, "Unknown datatype used.\n");
             return 0;
     }
 }
-void* findIn(dynamArr* arr, void* el, DataType type) {
-    switch(type) {
-        case INT:
-            int* typeArr = (int*) arr->data;
-            for(size_t i = 0; i < arr->i; i++) {
-                if(typeArr[i] == *((int*) el)) return typeArr + i;
-            }
-            return 0;
-        case INT32:
-            int32_t* typeArr = (int32_t*) arr->data;
-            for(size_t i = 0; i < arr->i; i++) {
-                if(typeArr[i] == *((int32_t*) el)) return typeArr + i;
-            }
-            return 0;
-        case UINT32:
-            uint32_t* typeArr = (uint32_t*) arr->data;
-            for(size_t i = 0; i < arr->i; i++) {
-                if(typeArr[i] == *((uint32_t*) el)) return typeArr + i;
-            }
-            return 0;
-        case INT64:
-            int64_t* typeArr = (int64_t*) arr->data;
-            for(size_t i = 0; i < arr->i; i++) {
-                if(typeArr[i] == *((int64_t*) el)) return typeArr + i;
-            }
-            return 0;
-        case UINT64:
-            uint64_t* typeArr = (uint64_t*) arr->data;
-            for(size_t i = 0; i < arr->i; i++) {
-                if(typeArr[i] == *((uint64_t*) el)) return typeArr + i;
-            }
-            return 0;
-        case FLOAT:
-            float* typeArr = (float*) arr->data;
-            for(size_t i = 0; i < arr->i; i++) {
-                if(typeArr[i] == *((float*) el)) return typeArr + i;
-            }
-            return 0;
-        case DOUBLE:
-            double* typeArr = (double*) arr->data;
-            for(size_t i = 0; i < arr->i; i++) {
-                if(typeArr[i] == *((double*) el)) return typeArr + i;
-            }
-            return 0;
-        case POINTER:
-            char** typeArr = (char**) arr->data;
-            for(size_t i = 0; i < arr->i; i++) {
-                if(typeArr[i] ==  el) return typeArr + i;
-            }
-            return 0;
-        default:
-            fprintf(stderr, "%s is an unknown datatype.\n", type);
-    }
-}
-void* insertInto(dynamArr* arr, void* el, DataType type) {
-    if(arr->size == arr->i) {
-        arr->data = realloc(sizeOfType(type) * arr->size * 2);
+
+uint8_t insertInto(dynamArr* arr, Data* data) {
+    if(arr->size <= arr->i) {
+        arr->data = realloc(arr->data, sizeof(Data*) * arr->size * 2);
         if(!arr->data) {
-            fprintf(stderr, "An error occured when reallocating space for a HashTable of size %d to size %d, with an element size of %d (%d bytes -> %d bytes).\n",
-            arr->size, sizeOfType(arr->size * 2), sizeOfType(type) * arr->size, sizeOfType(type) * arr->size * 2);
+            fprintf(stderr, "An error occured when reallocating space for a HashTable of size %lu to size %lu.\n",
+            arr->size, arr->size * 2);
             arr->size = 0;
             arr->i = 0;
-            return;
+            return 0;
         }
         arr->size *= 2;
     }
+    arr->data[arr->i] = data;
+    arr->i++;
 
-    switch(type) {
-        case INT:
-            ((int*) arr->data)[arr->i++] = *((int*) el);
-            return (int*) arr->data + arr->i;
-        case INT32:
-            ((int32_t*) arr->data)[arr->i++] = *((int32_t*) el);
-            return (int32_t*) arr->data + arr->i;
-        case UINT32:
-            ((uint32_t*) arr->data)[arr->i++] = *((uint32_t*) el);
-            return (uint32_t*) arr->data + arr->i;
-        case INT64:
-            ((int64_t*) arr->data)[arr->i++] = *((int64_t*) el);
-            return (int64_t*) arr->data + arr->i;
-        case UINT64:
-            ((uint64_t*) arr->data)[arr->i++] = *((uint64_t*) el);
-            return (uint64_t*) arr->data + arr->i;
-        case FLOAT:
-            ((float*) arr->data)[arr->i++] = *((float*) el);
-            return (float*) arr->data + arr->i;
-        case DOUBLE:
-            ((double*) arr->data)[arr->i++] = *((double*) el);
-            return (double*) arr->data + arr->i;
-        case POINTER:
-            ((char**) arr->data)[arr->i++] = el;
-            return (char**) arr->data + arr->i;
-        default:
-            fprintf(stderr, "%s is an unknown datatype.\n", type);
-            break;
+    return 1;
+}
+
+dynamArr* createNewDynamArr() {
+    dynamArr* arr = malloc(sizeof(dynamArr));
+    if(!arr) {
+        fprintf(stderr, "An error occured when allocating space for a new chain.\n");
+        return 0;
     }
-}
-dynamArr* createNewDynamArr(DataType type) {
+    arr->data = malloc(sizeof(Data*) * 4);
+    if(!arr->data) {
+        fprintf(stderr, "An error occured when allocating space for a new chain.\n");
+        free(arr);
+        return 0;
+    }
+    arr->size = 4;
+    arr->i = 0;
     
+    return arr;
 }
 
 
-uint32_t hashInt(int key, int m) {
-    return hash(&key, sizeof(int), m);
-}
-uint32_t hash(char* key, int n, int m) {
+uint32_t hash(char* key, size_t n, size_t m) {
     uint32_t keySum = 0; 
-    for(int i = 0; i < n; i++) {
+    for(size_t i = 0; i < n; i++) {
         keySum += (uint32_t) key[i];
     }
 
-    return m * fmod((keySum * sqrt(5.0) - 1.0) / 2.0, 1.0);
+    double decimal = fmod((keySum * sqrt(5.0) - 1.0) / 2.0, 1.0);
+    if(decimal < 0) decimal = - decimal;
+    return m * decimal;
 }
 
-HashTable* createHashTable(uint32_t minSize, DataType type) {
+HashTable* createHashTable(uint32_t minSize) {
     HashTable* table = malloc(sizeof(HashTable));
     if(!table) {
         fprintf(stderr, "An error occured when allocating space for a new HashTable.\n");
@@ -180,30 +81,23 @@ HashTable* createHashTable(uint32_t minSize, DataType type) {
 
     table->table = calloc(size, sizeof(dynamArr*));
     if(!table->table) {
-        fprintf(stderr, "An error occured when allocating space for a new HashTable of size %d, with an element size of %d bytes (%d bytes total).\n",
-        size, sizeofType(type), size * sizeofType(type));
+        fprintf(stderr, "An error occured when allocating space for a new HashTable of size %d.\n", size);
         free(table);
 
         return 0;
     }
 
     table->size = size;
-    table->type = type;
+    table->insertCount = 0;
 
     return table;
 }
 
-void* insert(HashTable* table, char* key, size_t keySize, void* el, DataType type) {
-    if(type != table->type) {
-        fprintf(stderr, "The specified datatype (%s) does not match the datatype of the specified HashTable (%s).", 
-            type, table->type);
-        return 0;
-    }
-
+uint8_t insert(HashTable* table, char* key, size_t keySize, void* data, DataType type) {
     uint32_t hashKey = hash(key, keySize, table->size);
     dynamArr* chain = table->table[hashKey];
     if(!chain) {
-        chain = createNewDynamArr(type);
+        chain = createNewDynamArr();
         if(!chain) {
             fprintf(stderr, "A problem occured when allocating space for a new chain in the Hashtable.\n");
             return 0;
@@ -211,5 +105,60 @@ void* insert(HashTable* table, char* key, size_t keySize, void* el, DataType typ
         table->table[hashKey] = chain;
     }
 
-    return insertInto()
+    Data* node = malloc(sizeof(Data));
+    if(!node) {
+        fprintf(stderr, "An error occured when allocating space for a new element.\n");
+        return 0;
+    }
+
+    node->data = data;
+    node->key = key;
+    node->keySize = keySize;
+    node->type = type;
+
+    table->insertCount++;
+
+    return insertInto(chain, node);
+}
+
+void printTable(HashTable* table) {
+    for(size_t i = 0; i < table->size; i++) {
+        printf("Bucket %lu:\n", i);
+        dynamArr* arr = table->table[i];
+        if(arr) {
+            for(size_t j = 0; j < arr->i; j++) {
+                Data* data = arr->data[j];
+                printf("%d\n", *((int*) data->data));
+            }
+        }
+        printf("\n");
+    }
+    printf("\n\n");
+}
+
+void freeNode(Data* data) {
+    if(data) {
+        if(data->data)
+            free(data->data);
+        free(data);
+    }
+}
+
+void freeChain(dynamArr* chain) {
+    if(chain) {
+        for(size_t i = 0; i < chain->i; i++) {
+            if(chain->data[i])
+                freeNode(chain->data[i]);
+        }
+        free(chain);
+    }
+}
+
+void freeTable(HashTable* table) {
+    if(table) {
+        for(size_t i = 0; i < table->size; i++) {
+            freeChain(table->table[i]);
+        }
+    }
+    free(table);
 }

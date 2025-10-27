@@ -21,10 +21,11 @@ int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const 
     for(int i = 0; i < 10; i++) {
         int* num = malloc(sizeof(int));
         *num = i;
-        insert(table, (char*) &num, sizeof(int), num, INT);
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
     }
 
     printTable(table);
+
     freeTable(table);
 
     return 0;

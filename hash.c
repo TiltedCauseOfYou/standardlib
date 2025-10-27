@@ -1,58 +1,5 @@
 #include "hash.h"
 
-uint8_t sizeOfType(DataType type) {
-    switch(type) {
-        case INT:
-            return sizeof(int);
-        case INT32:
-        case UINT32:
-            return 4;
-        case INT64:
-        case UINT64:
-            return 8;
-        case DOUBLE:
-            return sizeof(double);
-        case FLOAT:
-            return sizeof(float);
-        case(POINTER):
-            return sizeof(char*);
-        default:
-            fprintf(stderr, "Unknown datatype used.\n");
-            return 0;
-    }
-}
-
-void printType(void* el, DataType type) {
-    if(!el) return;
-    switch(type) {
-        case INT:
-            printf("%-10d", *((int*) el));
-            break;
-        case INT32:
-            printf("%-10d", *((int32_t*) el));
-            break;
-        case UINT32:
-            printf("%-10u", *((uint32_t*) el));
-            break;
-        case INT64:
-            printf("%-10ld", *((int64_t*) el));
-            break;
-        case UINT64:
-            printf("%-10lu", *((uint64_t*) el));
-            break;
-        case FLOAT:
-            printf("%-10f", *((float*) el));
-            break;
-        case DOUBLE:
-            printf("%-10lf", *((double*) el));
-            break;
-        case POINTER:
-            printf("%-10p", el);
-            break;
-        default:
-            fprintf(stderr, "Unknown datatype.\n");
-    }
-}
 
 uint8_t insertInto(dynamArr* arr, Data* data) {
     if(arr->size <= arr->i) {

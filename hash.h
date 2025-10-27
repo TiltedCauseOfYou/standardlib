@@ -4,19 +4,10 @@
 #include <string.h>
 #include <math.h>
 
+#include "Data.h"
+
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
-
-typedef enum DataType {
-    INT,
-    INT32,
-    UINT32,
-    INT64,
-    UINT64,
-    FLOAT,
-    DOUBLE,
-    POINTER
-} DataType;
 
 typedef struct Data {
     size_t keySize;

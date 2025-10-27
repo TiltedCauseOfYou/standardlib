@@ -1,5 +1,6 @@
 // #include "vector.h"
-#include "hash.h"
+// #include "hash.h"
+#include "linked_list.h"
 
 int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const *argv[])
 {
@@ -17,7 +18,7 @@ int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const 
 
     freeVec(vec); */
 
-    HashTable* table = createHashTable(10);
+    /* HashTable* table = createHashTable(10);
     for(int i = 0; i < 10; i++) {
         int* num = malloc(sizeof(int));
         *num = i;
@@ -26,7 +27,24 @@ int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const 
 
     printTable(table);
 
-    freeTable(table);
+    freeTable(table); */
+
+    LinkedList* list = createList();
+    printLinkedList(list);
+
+    for(size_t i = 0; i < 10; i++) {
+        int* num = malloc(sizeof(int));
+        *num = i;
+        insertIntoList(list, num, INT);
+        printLinkedList(list);
+    }
+    for(size_t i = 0; i < 10; i++) {
+        int* num = malloc(sizeof(int));
+        *num = i;
+        deleteFromList(list, num, INT);
+        free(num);
+        printLinkedList(list);
+    }
 
     return 0;
 }

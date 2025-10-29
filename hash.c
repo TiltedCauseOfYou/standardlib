@@ -1,7 +1,7 @@
 #include "hash.h"
 
 
-uint8_t insertInto(dynamArr* arr, Data* data) {
+/* uint8_t insertInto(dynamArr* arr, Data* data) {
     if(arr->size <= arr->i) {
         arr->data = realloc(arr->data, sizeof(Data*) * arr->size * 2);
         if(!arr->data) {
@@ -45,7 +45,7 @@ dynamArr* createNewDynamArr() {
     arr->i = 0;
     
     return arr;
-}
+} */
 
 
 uint32_t hash(char* key, size_t n, size_t m) {
@@ -68,7 +68,7 @@ HashTable* createHashTable(uint32_t minSize) {
 
     uint32_t size = pow(2, ceil(log2(minSize)));
 
-    table->table = calloc(size, sizeof(dynamArr*));
+    table->table = calloc(size, sizeof(LinkedList*));
     if(!table->table) {
         fprintf(stderr, "An error occured when allocating space for a new HashTable of size %d.\n", size);
         free(table);
@@ -84,9 +84,9 @@ HashTable* createHashTable(uint32_t minSize) {
 
 uint8_t insert(HashTable* table, char* key, size_t keySize, DataType keyType, void* data, DataType type) {
     uint32_t hashKey = hash(key, keySize, table->size);
-    dynamArr* chain = table->table[hashKey];
+    LinkedList* chain = table->table[hashKey];
     if(!chain) {
-        chain = createNewDynamArr();
+        chain = createList();
         if(!chain) {
             fprintf(stderr, "A problem occured when allocating space for a new chain in the Hashtable.\n");
             return 0;
@@ -108,9 +108,18 @@ uint8_t insert(HashTable* table, char* key, size_t keySize, DataType keyType, vo
 
     table->insertCount++;
 
-    return insertInto(chain, node);
+    return insertIntoList(chain, node, POINTER);
 }
 
+unsigned char compareKey(void* e1, void* e2) {
+    Data* el1 = (Data*) e1;
+    Data* el2 = (Data*) e2;
+
+    if(el1->keySize != el2->keySize) return 0;
+    if(!strncmp((char*) el1->key, (char*) el2->key, el1->keySize))
+        return 1;
+    return 0;
+}
 void* get(HashTable* table, char* key, size_t keySize) {
     if(!table) {
         fprintf(stderr, "Cannot access table from Nullpointer.\n");
@@ -118,8 +127,31 @@ void* get(HashTable* table, char* key, size_t keySize) {
     }
 
     uint32_t hashKey = hash(key, keySize, table->size);
-    dynamArr* chain = table->table[hashKey];
-    return getFrom(chain, key, keySize);
+    LinkedList* chain = table->table[hashKey];
+    Data* data = malloc(sizeof(Data));
+    if(!data) {
+        fprintf(stderr, "A proplem occurred when allocating space to search a chain in a Hash Table.\n");
+        return 0;
+    }
+    data->key = key;
+    data->keySize = keySize;
+
+    void* el = find(chain, data, &compareKey);
+    free(data);
+    return el;
+}
+
+void printNode(void* node) {
+    if(node)
+        printTypeBlank(((Data*) node)->data, ((Data*) node)->type);
+}
+
+void printBuckets(HashTable* table) {
+    size_t size = table->size;
+    for(size_t i = 0; i < size; i++) {
+        printf("Bucket %lu:\n", i);
+        printLinkedListCustom(table->table[i], &printNode);
+    }
 }
 
 void printTable(HashTable* table) {
@@ -129,13 +161,15 @@ void printTable(HashTable* table) {
     }
     printf("+\n");
     for(size_t i = 0; i < table->size; i++) {
-        dynamArr* arr = table->table[i];
-        if(arr) {
-            for(size_t j = 0; j < arr->i; j++) {
-                Data* data = arr->data[j];
+        LinkedList* list = table->table[i];
+        if(list) {
+            ListNode* cur = list->head;
+            while(cur) {
+                Data* data = (Data*) cur->data;
                 printf("| ");
                 printType(data->key, data->keyType);
                 printf(" ");
+                cur = cur->next;
             }
         }
     }
@@ -145,42 +179,33 @@ void printTable(HashTable* table) {
     }
     printf("+\n");
     for(size_t i = 0; i < table->size; i++) {
-        dynamArr* arr = table->table[i];
-        if(arr) {
-            for(size_t j = 0; j < arr->i; j++) {
-                Data* data = arr->data[j];
+        LinkedList* list = table->table[i];
+        if(list) {
+            ListNode* cur = list->head;
+            while(cur) {
+                Data* data = (Data*) cur->data;
                 printf("| ");
                 printType(data->data, data->type);
                 printf(" ");
+                cur = cur->next;
             }
         }
     }
     printf("|\n\n");
 }
 
-void freeNode(Data* data) {
+void freeNode(void* data) {
     if(data) {
-        if(data->data)
-            free(data->data);
+        if(((Data*) data)->data)
+            free(((Data*) data)->data);
         free(data);
-    }
-}
-
-void freeChain(dynamArr* chain) {
-    if(chain) {
-        for(size_t i = 0; i < chain->i; i++) {
-            if(chain->data[i])
-                freeNode(chain->data[i]);
-        }
-        free(chain->data);
-        free(chain);
     }
 }
 
 void freeTable(HashTable* table) {
     if(table) {
         for(size_t i = 0; i < table->size; i++) {
-            freeChain(table->table[i]);
+            freeListCustom(table->table[i], &freeNode);
         }
     }
     free(table->table);

@@ -4,7 +4,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "Data.h"
+#include "data.h"
+#include "linked_list.h"
 
 #ifndef HASHTABLE_H
 #define HASHTABLE_H
@@ -17,16 +18,16 @@ typedef struct Data {
     DataType type;
 } Data;
 
-typedef struct dynamArr {
+/* typedef struct dynamArr {
     size_t size;
     size_t i;
     Data** data;
-} dynamArr;
+} dynamArr; */
 
 typedef struct HashTable {
     size_t size;
     size_t insertCount;
-    dynamArr** table;
+    LinkedList** table;
     DataType type;
 } HashTable;
 
@@ -37,6 +38,7 @@ uint8_t insert(HashTable* table, char* key, size_t keySize, DataType keyType, vo
 void* get(HashTable* table, char* key, size_t keySize);
 
 void printTable(HashTable* table);
+void printBuckets(HashTable* table);
 void freeTable(HashTable* table);
 
 #endif

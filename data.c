@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "Data.h"
+#include "data.h"
 
 unsigned char sizeOfType(DataType type) {
     switch(type) {

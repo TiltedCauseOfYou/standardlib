@@ -1,6 +1,6 @@
 // #include "vector.h"
-// #include "hash.h"
-#include "linked_list.h"
+#include "hash.h"
+// #include "linked_list.h"
 
 int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const *argv[])
 {
@@ -18,19 +18,19 @@ int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const 
 
     freeVec(vec); */
 
-    /* HashTable* table = createHashTable(10);
+    HashTable* table = createHashTable(10);
     for(int i = 0; i < 10; i++) {
         int* num = malloc(sizeof(int));
         *num = i;
         insert(table, (char*) num, sizeof(int), INT, num, INT);
     }
+    printBuckets(table);
 
-    printTable(table);
+    freeTable(table);
 
-    freeTable(table); */
-
-    LinkedList* list = createList();
+    /* LinkedList* list = createList();
     printLinkedList(list);
+
 
     for(size_t i = 0; i < 10; i++) {
         int* num = malloc(sizeof(int));
@@ -38,13 +38,16 @@ int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const 
         insertIntoList(list, num, INT);
         printLinkedList(list);
     }
-    for(size_t i = 0; i < 10; i++) {
-        int* num = malloc(sizeof(int));
-        *num = i;
-        deleteFromList(list, num, INT);
-        free(num);
-        printLinkedList(list);
-    }
+    int num = 3;
+    int* el = deleteFromList(list, &num, INT);
+    if(el) free(el);
+    printLinkedList(list);
+    num = 5;
+    el = deleteFromList(list, &num, INT);
+    if(el) free(el);
+    printLinkedList(list);
+
+    freeListFull(list); */
 
     return 0;
 }

@@ -18,13 +18,45 @@ int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const 
 
     freeVec(vec); */
 
-    HashTable* table = createHashTable(10);
-    for(int i = 0; i < 10; i++) {
+    int n = 1;
+    HashTable* table = createHashTable(n);
+    while(table->insertCount <= 100) {
         int* num = malloc(sizeof(int));
-        *num = i;
-        insert(table, (char*) num, sizeof(int), INT, num, INT);
+        *num = n++;
+        insert(table, (char*) &num, sizeof(int), INT, &num, INT);
     }
-    printBuckets(table);
+    printf("%lf\n", (((double) countTotalCollisions(table) / table->insertCount)) * 100);
+    fflush(stdout);
+    while(table->insertCount <= 1000) {
+        int* num = malloc(sizeof(int));
+        *num = n++;
+        insert(table, (char*) &num, sizeof(int), INT, &num, INT);
+    }
+    printf("%lf\n", (((double) countTotalCollisions(table) / table->insertCount)) * 100);
+    fflush(stdout);
+    while(table->insertCount <= 10000) {
+        int* num = malloc(sizeof(int));
+        *num = n++;
+        insert(table, (char*) &num, sizeof(int), INT, &num, INT);
+    }
+    printf("%lf\n", (((double) countTotalCollisions(table) / table->insertCount)) * 100);
+    fflush(stdout);
+    while(table->insertCount <= 100000) {
+        int* num = malloc(sizeof(int));
+        *num = n++;
+        insert(table, (char*) &num, sizeof(int), INT, &num, INT);
+    }
+    printf("%lf\n", (((double) countTotalCollisions(table) / table->insertCount)) * 100);
+    fflush(stdout);
+    while(table->insertCount <= 1000000) {
+        int* num = malloc(sizeof(int));
+        *num = n++;
+        insert(table, (char*) &num, sizeof(int), INT, &num, INT);
+    }
+    printf("%lf\n", (((double) countTotalCollisions(table) / table->insertCount)) * 100);
+    
+    printf("\n\n");
+    fflush(stdout);
 
     freeTable(table);
 

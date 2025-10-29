@@ -1,5 +1,7 @@
 #include "hash.h"
 
+const uint32_t FNV_offset_basis = 0x811c9dc5;
+const uint32_t FNV_prime = 0x01000193;
 
 /* uint8_t insertInto(dynamArr* arr, Data* data) {
     if(arr->size <= arr->i) {
@@ -47,16 +49,23 @@ dynamArr* createNewDynamArr() {
     return arr;
 } */
 
+void freeTableRealloc(HashTable* table);
+unsigned char inTable(HashTable* table, char* key, size_t keySize);
 
 uint32_t hash(char* key, size_t n, size_t m) {
-    uint32_t keySum = 0; 
+    uint32_t hash = FNV_offset_basis;
     for(size_t i = 0; i < n; i++) {
-        keySum += (uint32_t) key[i];
+        hash ^= key[i];
+        hash *= FNV_prime;
     }
 
-    double decimal = fmod((keySum * sqrt(5.0) - 1.0) / 2.0, 1.0);
-    if(decimal < 0) decimal = - decimal;
-    return m * decimal;
+    return hash % m;
+
+    /* double decimal = keySum * ((sqrt(5.0) - 1.0) / 2.0);
+    if(decimal < 0) decimal = -decimal;
+    decimal = decimal - floor(decimal);
+    return floor(m * decimal); */
+
 }
 
 HashTable* createHashTable(uint32_t minSize) {
@@ -94,6 +103,42 @@ uint8_t insert(HashTable* table, char* key, size_t keySize, DataType keyType, vo
         table->table[hashKey] = chain;
     }
 
+    if(table->insertCount >= table->size) {
+        HashTable* newTable = createHashTable(table->size * 2);
+        if(!newTable) {
+            fprintf(stderr, "An error occured when allocating space for a bigger Hash Table.\n");
+            return 0;
+        }
+        
+        for(size_t i = 0; i < table->size; i++) {
+            LinkedList* list = table->table[i];
+            if(list) {
+                ListNode* cur = list->head;
+                while(cur) {
+                    Data* node = (Data*) cur->data;
+                    if(node) {
+                        //TODO: free newTable if insert fails
+                        insert(newTable, node->key, node->keySize, node->keyType, node->data, node->type);
+                        free(node);
+                    }
+                    ListNode* next = cur->next;
+                    free(cur);
+                    cur = next;
+                }
+                free(list);
+            }
+        }
+        free(table->table);
+
+        table->table = newTable->table;
+        table->size *= 2;
+
+        free(newTable);
+
+        hashKey = hash(key, keySize, table->size);
+        chain = table->table[hashKey];
+    }
+
     Data* node = malloc(sizeof(Data));
     if(!node) {
         fprintf(stderr, "An error occured when allocating space for a new element.\n");
@@ -107,8 +152,9 @@ uint8_t insert(HashTable* table, char* key, size_t keySize, DataType keyType, vo
     node->type = type;
 
     table->insertCount++;
+    unsigned char ret = insertIntoList(chain, node, POINTER);
 
-    return insertIntoList(chain, node, POINTER);
+    return ret;
 }
 
 unsigned char compareKey(void* e1, void* e2) {
@@ -120,6 +166,85 @@ unsigned char compareKey(void* e1, void* e2) {
         return 1;
     return 0;
 }
+
+void* delete(HashTable* table, char* key, size_t keySize) {
+    if(!inTable(table, key, keySize)) return 0;
+
+    Data* comp = malloc(sizeof(Data*));
+    if(!comp) {
+        fprintf(stderr, "An error occured when allocating space for a temporary element.\n");
+        return 0;
+    }
+
+    uint32_t hashKey = hash(key, keySize, table->size);
+    LinkedList* chain = table->table[hashKey];
+    if(!chain) {
+        free(comp);
+        return 0;
+    }
+    if(table->insertCount * 0.25 <= table->size) {
+        HashTable* newTable = createHashTable(table->size / 2);
+        if(!newTable){
+            fprintf(stderr, "An error occured when allocating space for a bigger Hash Table.\n");
+            free(comp);
+            return 0;
+        }
+        
+        for(size_t i = 0; i < table->size; i++) {
+            LinkedList* list = table->table[i];
+            if(list) {
+                ListNode* cur = list->head;
+                while(cur) {
+                    Data* el = (Data*) cur->data;
+                    insert(newTable, el->key, el->keySize, el->keyType, el->data, el->type);
+                    ListNode* next = cur->next;
+                    free(cur);
+                    cur = next;
+                }
+                free(list);
+            }
+        }
+        free(table->table);
+
+        table->table = newTable->table;
+        table->size /= 2;
+
+        free(newTable);
+
+        hashKey = hash(key, keySize, table->size);
+        chain = table->table[hashKey];
+    }
+
+    table->insertCount--;
+    Data* node = find(chain, comp, &compareKey);
+    free(comp);
+
+    void* ret = ((Data*) deleteFromList(chain, node, POINTER))->data;
+    free(node);
+    return ret;
+}
+
+unsigned char inTable(HashTable* table, char* key, size_t keySize) {
+    if(!table) {
+        fprintf(stderr, "Cannot access table from Nullpointer.\n");
+        return 0;
+    }
+
+    uint32_t hashKey = hash(key, keySize, table->size);
+    LinkedList* chain = table->table[hashKey];
+    Data* data = malloc(sizeof(Data));
+    if(!data) {
+        fprintf(stderr, "A proplem occurred when allocating space to search a chain in a Hash Table.\n");
+        return 0;
+    }
+    data->key = key;
+    data->keySize = keySize;
+
+    char exist = exists(chain, data, &compareKey);
+    free(data);
+    return exist;
+}
+
 void* get(HashTable* table, char* key, size_t keySize) {
     if(!table) {
         fprintf(stderr, "Cannot access table from Nullpointer.\n");
@@ -141,6 +266,84 @@ void* get(HashTable* table, char* key, size_t keySize) {
     return el;
 }
 
+Data** getAll(HashTable* table) {
+    Data** all = malloc(sizeof(Data*) * table->insertCount + 1);
+    if(!all) {
+        fprintf(stderr, "An error occurred when allocating space for the return array.\n");
+        return 0;
+    }
+    all[table->insertCount] = 0;
+    size_t p = 0;
+    for(size_t i = 0; i < table->size; i++) {
+        LinkedList* list = table->table[i];
+        if(list) {
+            ListNode* cur = list->head;
+            while(cur) {
+                all[p++] = (Data*) cur->data;
+                cur = cur->next;
+            }
+        }
+    }
+
+    return all;
+}
+
+Key** getAllKeys(HashTable* table) {
+    Key** keys = malloc(sizeof(Key*) * table->insertCount + 1);
+    if(!keys) {
+        fprintf(stderr, "An error occurred when allocating space for the return array.\n");
+        return 0;
+    }
+    keys[table->insertCount] = 0;
+    size_t p = 0;
+    for(size_t i = 0; i < table->size; i++) {
+        LinkedList* list = table->table[i];
+        if(list) {
+            ListNode* cur = list->head;
+            while(cur) {
+                Key* key = malloc(sizeof(Key));
+                if(!key) {
+                    fprintf(stderr, "An error occurred when allocating space for a key object.\n");
+                    for(size_t j = 0; j < p; j++) {
+                        free(keys[j]);
+                    }
+                    free(keys);
+                    return 0;
+                }
+                Data* data = cur->data;
+                key->key = data->key;
+                key->keySize = data->keySize;
+                key->type = data->keyType;
+                keys[p++] = key;
+                cur = cur->next;
+            }
+        }
+    }
+
+    return keys;
+}
+
+size_t countCollisions(LinkedList* chain) {
+    if(!chain || !chain->head) return 0;
+    size_t collisions = 0;
+
+    ListNode* cur = chain->head->next;
+    while(cur) {
+        collisions++;
+        cur = cur->next;
+    }
+
+    return collisions;
+}
+
+size_t countTotalCollisions(HashTable* table) {
+    size_t collisions = 0;
+    for(size_t i = 0; i < table->size; i++) {
+        collisions += countCollisions(table->table[i]);
+    }
+    return collisions;
+}
+
 void printNode(void* node) {
     if(node)
         printTypeBlank(((Data*) node)->data, ((Data*) node)->type);
@@ -148,10 +351,13 @@ void printNode(void* node) {
 
 void printBuckets(HashTable* table) {
     size_t size = table->size;
+    size_t collissions = 0;
     for(size_t i = 0; i < size; i++) {
         printf("Bucket %lu:\n", i);
         printLinkedListCustom(table->table[i], &printNode);
+        collissions += countCollisions(table->table[i]);
     }
+    printf("\nCollision: %lu (%.02lf%%)\n\n", collissions, (((double) collissions / table->insertCount)) * 100);
 }
 
 void printTable(HashTable* table) {
@@ -194,11 +400,23 @@ void printTable(HashTable* table) {
     printf("|\n\n");
 }
 
-void freeNode(void* data) {
-    if(data) {
-        if(((Data*) data)->data)
-            free(((Data*) data)->data);
-        free(data);
+void freeNode(void* node) {
+    if(node) {
+        if(((Data*) node)->data)
+            free(((Data*) node)->data);
+        if(((Data*) node)->key && ((Data*) node)->data != ((Data*) node)->key)
+            free(((Data*) node)->key);
+        free(node);
+    }
+}
+
+void freeTableRealloc(HashTable* table) {
+    if(table) {
+        for(size_t i = 0; i < table->size; i++) {
+            freeList(table->table[i]);
+        }
+        free(table->table);
+        free(table);
     }
 }
 
@@ -207,7 +425,7 @@ void freeTable(HashTable* table) {
         for(size_t i = 0; i < table->size; i++) {
             freeListCustom(table->table[i], &freeNode);
         }
+        free(table->table);
+        free(table);
     }
-    free(table->table);
-    free(table);
 }

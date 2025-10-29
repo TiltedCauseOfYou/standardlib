@@ -170,8 +170,8 @@ void freeList(LinkedList* list) {
             free(cur);
             cur = next;
         }
+        free(list);
     }
-    free(list);
 }
 
 void freeListCustom(LinkedList* list, void (*freeData)(void* data)) {

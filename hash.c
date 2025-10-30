@@ -143,7 +143,8 @@ HashTable* createHashTable(uint32_t minSize) {
         return 0;
     }
 
-    uint32_t size = pow(10, ceil(log10(minSize)));
+    uint32_t size = 11;
+    while(size < minSize) size *= 2;
 
     table->table = calloc(size, sizeof(LinkedList*));
     if(!table->table) {
@@ -160,6 +161,11 @@ HashTable* createHashTable(uint32_t minSize) {
 }
 
 uint8_t insert(HashTable* table, char* key, size_t keySize, DataType keyType, void* data, DataType type) {
+    if(inTable(table, key, keySize)) {
+        Data* el = get(table, key, keySize);
+        el->data = data;
+        return 1;
+    }
     uint32_t hashKey = hash(key, keySize, table->size);
     LinkedList* chain = table->table[hashKey];
     if(!chain) {
@@ -171,7 +177,7 @@ uint8_t insert(HashTable* table, char* key, size_t keySize, DataType keyType, vo
         table->table[hashKey] = chain;
     }
 
-    if(table->insertCount >= table->size) {
+    if(((double) table->insertCount) / table->size >= 0.75) {
         HashTable* newTable = createHashTable(table->size * 2);
         if(!newTable) {
             fprintf(stderr, "An error occured when allocating space for a bigger Hash Table.\n");

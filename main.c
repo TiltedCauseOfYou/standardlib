@@ -2,22 +2,33 @@
 #include "hash.h"
 // #include "linked_list.h"
 
-int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const *argv[])
-{
-    /* vec32* vec = newVec();
+void testLinkedListFunc() {
+    LinkedList* list = createList();
+    printLinkedList(list);
 
-    for(int i = 1; i < 51; i++) {
-        append(vec, i);
-        printVec(vec);
+
+    for(size_t i = 0; i < 10; i++) {
+        int* num = malloc(sizeof(int));
+        *num = i;
+        insertIntoList(list, num, INT);
+        printLinkedList(list);
     }
+    int num = 3;
+    int* el = deleteFromList(list, &num, INT);
+    if(el) free(el);
+    printLinkedList(list);
+    num = 5;
+    el = deleteFromList(list, &num, INT);
+    if(el) free(el);
+    printLinkedList(list);
 
-    for(int i = 0; i < 50; i++) {
-        printf("%d", pop(vec));
-        printVec(vec);
-    }
+    freeListFull(list);
+}
 
-    freeVec(vec); */
+void testHashFunc() {
+}
 
+void testHashingDist() {
     int n = 1;
     HashTable* table = createHashTable(n);
     while(table->insertCount <= 100) {
@@ -58,28 +69,12 @@ int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const 
     printf("\n\n");
     fflush(stdout);
 
-    freeTable(table);
+    // freeTable(table);
+}
 
-    /* LinkedList* list = createList();
-    printLinkedList(list);
-
-
-    for(size_t i = 0; i < 10; i++) {
-        int* num = malloc(sizeof(int));
-        *num = i;
-        insertIntoList(list, num, INT);
-        printLinkedList(list);
-    }
-    int num = 3;
-    int* el = deleteFromList(list, &num, INT);
-    if(el) free(el);
-    printLinkedList(list);
-    num = 5;
-    el = deleteFromList(list, &num, INT);
-    if(el) free(el);
-    printLinkedList(list);
-
-    freeListFull(list); */
+int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const *argv[])
+{
+    testHashingDist();
 
     return 0;
 }

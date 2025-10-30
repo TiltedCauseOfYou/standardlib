@@ -3,6 +3,13 @@
 const uint32_t FNV_offset_basis = 0x811c9dc5;
 const uint32_t FNV_prime = 0x01000193;
 
+
+unsigned char hash_switch = 4;
+
+void incHashSwitch() {
+    hash_switch++;
+}
+
 /* uint8_t insertInto(dynamArr* arr, Data* data) {
     if(arr->size <= arr->i) {
         arr->data = realloc(arr->data, sizeof(Data*) * arr->size * 2);
@@ -52,7 +59,24 @@ dynamArr* createNewDynamArr() {
 void freeTableRealloc(HashTable* table);
 unsigned char inTable(HashTable* table, char* key, size_t keySize);
 
-uint32_t hash(char* key, size_t n, size_t m) {
+double log_base(double base, double x) {
+    return log10(x) / log10(base);
+}
+
+uint32_t mul_hash(char* key, size_t n, size_t m) {
+    uint32_t keySum = 0;
+    for(size_t i = 0; i < n; i++) {
+        keySum += key[i];
+    }
+
+    double decimal = keySum * ((sqrt(5.0) - 1.0) / 2.0);
+    if(decimal < 0) decimal = -decimal;
+    decimal = decimal - floor(decimal);
+
+    return floor(m * decimal);
+}
+
+uint32_t fnv_hash(char* key, size_t n, size_t m) {
     uint32_t hash = FNV_offset_basis;
     for(size_t i = 0; i < n; i++) {
         hash ^= key[i];
@@ -60,12 +84,56 @@ uint32_t hash(char* key, size_t n, size_t m) {
     }
 
     return hash % m;
+}
 
-    /* double decimal = keySum * ((sqrt(5.0) - 1.0) / 2.0);
-    if(decimal < 0) decimal = -decimal;
-    decimal = decimal - floor(decimal);
-    return floor(m * decimal); */
+uint32_t djb2_hash(char* key, size_t n, size_t m) {
+    uint32_t hash = 5381;
 
+    for(size_t i = 0; i < n; i++) {
+        hash = hash * 33 ^ key[i];
+    }
+    return hash % m;
+}
+
+uint32_t sdbm_hash(char* key, size_t n, size_t m) {
+    uint32_t hash = 0;
+    for(size_t i = 0; i < n; i++) {
+        hash = key[i] + (hash << 6) + (hash << 16) - hash;
+    }
+    return hash % m;
+}
+
+uint32_t joaat_hash(char* key, size_t n, size_t m) {
+    uint32_t hash = 0;
+    for(size_t i = 0; i < n; i++) {
+        hash += key[i];
+        hash += hash << 10;
+        hash ^= hash >> 6;
+    }
+
+    hash += hash << 3;
+    hash ^= hash >> 11;
+    hash += hash << 15;
+
+    return hash % m;
+}
+
+uint32_t hash(char* key, size_t n, size_t m) {
+    switch(hash_switch) {
+        case 0:
+            return mul_hash(key, n, m);
+        case 1:
+            return fnv_hash(key, n, m);
+        case 2:
+            return djb2_hash(key, n, m);
+        case 3:
+            return sdbm_hash(key, n, m);
+        case 4:
+            return joaat_hash(key, n, m);
+        default:
+            fprintf(stderr, "Unknown hash_switch value.\n");
+            return fnv_hash(key, n, m);
+    }
 }
 
 HashTable* createHashTable(uint32_t minSize) {
@@ -75,7 +143,7 @@ HashTable* createHashTable(uint32_t minSize) {
         return 0;
     }
 
-    uint32_t size = pow(2, ceil(log2(minSize)));
+    uint32_t size = pow(10, ceil(log10(minSize)));
 
     table->table = calloc(size, sizeof(LinkedList*));
     if(!table->table) {

@@ -31,49 +31,120 @@ void testHashFunc() {
 void testHashingDist() {
     int n = 1;
     HashTable* table = createHashTable(n);
-    while(table->insertCount <= 100) {
+
+    do {
         int* num = malloc(sizeof(int));
         *num = n++;
-        insert(table, (char*) &num, sizeof(int), INT, &num, INT);
-    }
-    printf("%lf\n", (((double) countTotalCollisions(table) / table->insertCount)) * 100);
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    } while(((double) (table->insertCount+1)) / table->size < 0.75);
+    printf("%lf\n", (((double) countTotalCollisions(table)) / table->insertCount) * 100);
     fflush(stdout);
-    while(table->insertCount <= 1000) {
+    do {
         int* num = malloc(sizeof(int));
         *num = n++;
-        insert(table, (char*) &num, sizeof(int), INT, &num, INT);
-    }
-    printf("%lf\n", (((double) countTotalCollisions(table) / table->insertCount)) * 100);
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    } while(((double) (table->insertCount+1)) / table->size < 0.75);
+    printf("%lf\n", (((double) countTotalCollisions(table)) / table->insertCount) * 100);
     fflush(stdout);
-    while(table->insertCount <= 10000) {
+    do {
         int* num = malloc(sizeof(int));
         *num = n++;
-        insert(table, (char*) &num, sizeof(int), INT, &num, INT);
-    }
-    printf("%lf\n", (((double) countTotalCollisions(table) / table->insertCount)) * 100);
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    } while(((double) (table->insertCount+1)) / table->size < 0.75);
+    printf("%lf\n", (((double) countTotalCollisions(table)) / table->insertCount) * 100);
     fflush(stdout);
-    while(table->insertCount <= 100000) {
+    do {
         int* num = malloc(sizeof(int));
         *num = n++;
-        insert(table, (char*) &num, sizeof(int), INT, &num, INT);
-    }
-    printf("%lf\n", (((double) countTotalCollisions(table) / table->insertCount)) * 100);
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    } while(((double) (table->insertCount+1)) / table->size < 0.75);
+    printf("%lf\n", (((double) countTotalCollisions(table)) / table->insertCount) * 100);
     fflush(stdout);
-    while(table->insertCount <= 1000000) {
+    do {
         int* num = malloc(sizeof(int));
         *num = n++;
-        insert(table, (char*) &num, sizeof(int), INT, &num, INT);
-    }
-    printf("%lf\n", (((double) countTotalCollisions(table) / table->insertCount)) * 100);
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    } while(((double) (table->insertCount+1)) / table->size < 0.75);
+    printf("%lf\n", (((double) countTotalCollisions(table)) / table->insertCount) * 100);
+    do {
+        int* num = malloc(sizeof(int));
+        *num = n++;
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    } while(((double) (table->insertCount+1)) / table->size < 0.75);
+    printf("%lf\n", (((double) countTotalCollisions(table)) / table->insertCount) * 100);
+    do {
+        int* num = malloc(sizeof(int));
+        *num = n++;
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    } while(((double) (table->insertCount+1)) / table->size < 0.75);
+    printf("%lf\n", (((double) countTotalCollisions(table)) / table->insertCount) * 100);
+    do {
+        int* num = malloc(sizeof(int));
+        *num = n++;
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    } while(((double) (table->insertCount+1)) / table->size < 0.75);
+    printf("%lf\n", (((double) countTotalCollisions(table)) / table->insertCount) * 100);
     
-    printf("\n\n");
+    printf("\n");
     fflush(stdout);
 
+    table = createHashTable(1);
+
+    for(int i = 0; i < 100; i++) {
+        int* num = malloc(sizeof(int));
+        *num = i;
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    }
+    printf("%lf\n", (((double) countTotalCollisions(table)) / ((double) table->insertCount)) * 100.0);
+
+    for(int i = 100; i < 1000; i++) {
+        int* num = malloc(sizeof(int));
+        *num = i;
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    }
+    printf("%lf\n", (((double) countTotalCollisions(table)) / ((double) table->insertCount)) * 100.0);
+
+    for(int i = 1000; i < 10000; i++) {
+        int* num = malloc(sizeof(int));
+        *num = i;
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    }
+    printf("%lf\n", (((double) countTotalCollisions(table)) / ((double) table->insertCount)) * 100.0);
+
+    for(int i = 10000; i < 100000; i++) {
+        int* num = malloc(sizeof(int));
+        *num = i;
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    }
+    printf("%lf\n\n\n", (((double) countTotalCollisions(table)) / ((double) table->insertCount)) * 100.0);
+
+    /* for(int i = 100000; i < 1000000; i++) {
+        int* num = malloc(sizeof(int));
+        *num = i;
+        insert(table, (char*) num, sizeof(int), INT, num, INT);
+    }
+    printf("%lf\n", (((double) countTotalCollisions(table)) / table->insertCount) * 100);
+    
+    printf("\n\n");
+    fflush(stdout); */
     // freeTable(table);
 }
 
 int main(__attribute__ ((unused)) int argc, __attribute__ ((unused)) char const *argv[])
 {
+    printf("mul:\n");
+    testHashingDist();
+    incHashSwitch();
+    printf("fnv:\n");
+    testHashingDist();
+    incHashSwitch();
+    printf("djb2:\n");
+    testHashingDist();
+    incHashSwitch();
+    printf("sbdm:\n");
+    testHashingDist();
+    incHashSwitch();
+    printf("joaat:\n");
     testHashingDist();
 
     return 0;

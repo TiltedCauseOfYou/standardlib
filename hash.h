@@ -46,6 +46,8 @@ void printTable(HashTable* table);
 void printBuckets(HashTable* table);
 void freeTable(HashTable* table);
 
+size_t countTotalCollisions(HashTable* table);
+
 Data** getAll(HashTable* table);
 Key** getAllKeys(HashTable* table);
 

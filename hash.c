@@ -4,7 +4,7 @@ const uint32_t FNV_offset_basis = 0x811c9dc5;
 const uint32_t FNV_prime = 0x01000193;
 
 
-unsigned char hash_switch = 4;
+unsigned char hash_switch = 0;
 
 void incHashSwitch() {
     hash_switch++;
